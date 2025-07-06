@@ -5,7 +5,9 @@
 #SBATCH -c 3
 #SBATCH --output=example_4_non_fixed.out
 
-source activate mlfold
+#source activate mlfold
+source ~/.bash_profile
+echo $SHELL
 
 folder_with_pdbs="../inputs/PDB_complexes/pdbs/"
 
@@ -23,13 +25,13 @@ chains_to_design="A C"
 #The first amino acid in the chain corresponds to 1 and not PDB residues index for now.
 design_only_positions="1 2 3 4 5 6 7 8 9 10, 3 4 5 6 7 8" #design only these residues; use flag --specify_non_fixed
 
-python ../helper_scripts/parse_multiple_chains.py --input_path=$folder_with_pdbs --output_path=$path_for_parsed_chains
+python3 ../helper_scripts/parse_multiple_chains.py --input_path=$folder_with_pdbs --output_path=$path_for_parsed_chains
 
-python ../helper_scripts/assign_fixed_chains.py --input_path=$path_for_parsed_chains --output_path=$path_for_assigned_chains --chain_list "$chains_to_design"
+python3 ../helper_scripts/assign_fixed_chains.py --input_path=$path_for_parsed_chains --output_path=$path_for_assigned_chains --chain_list "$chains_to_design"
 
-python ../helper_scripts/make_fixed_positions_dict.py --input_path=$path_for_parsed_chains --output_path=$path_for_fixed_positions --chain_list "$chains_to_design" --position_list "$design_only_positions" --specify_non_fixed
+python3 ../helper_scripts/make_fixed_positions_dict.py --input_path=$path_for_parsed_chains --output_path=$path_for_fixed_positions --chain_list "$chains_to_design" --position_list "$design_only_positions" --specify_non_fixed
 
-python ../protein_mpnn_run.py \
+python3 ../protein_mpnn_run.py \
         --jsonl_path $path_for_parsed_chains \
         --chain_id_jsonl $path_for_assigned_chains \
         --fixed_positions_jsonl $path_for_fixed_positions \

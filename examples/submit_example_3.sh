@@ -5,7 +5,9 @@
 #SBATCH -c 3
 #SBATCH --output=example_3.out
 
-source activate mlfold
+#source activate mlfold
+source ~/.bash_profile
+echo $SHELL
 
 path_to_PDB="../inputs/PDB_complexes/pdbs/3HTN.pdb"
 
@@ -17,7 +19,7 @@ fi
 
 chains_to_design="A B"
 
-python ../protein_mpnn_run.py \
+python3 ../protein_mpnn_run.py \
         --pdb_path $path_to_PDB \
         --pdb_path_chains "$chains_to_design" \
         --out_folder $output_dir \

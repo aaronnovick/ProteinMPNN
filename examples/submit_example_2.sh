@@ -5,8 +5,11 @@
 #SBATCH -c 2
 #SBATCH --output=example_2.out
 
-source activate mlfold
+#source activate mlfold
+#echo $CONDA_DEFAULT_ENV
 
+source ~/.bash_profile
+echo $SHELL
 
 folder_with_pdbs="../inputs/PDB_complexes/pdbs/"
 
@@ -20,11 +23,11 @@ path_for_parsed_chains=$output_dir"/parsed_pdbs.jsonl"
 path_for_assigned_chains=$output_dir"/assigned_pdbs.jsonl"
 chains_to_design="A B"
 
-python ../helper_scripts/parse_multiple_chains.py --input_path=$folder_with_pdbs --output_path=$path_for_parsed_chains
+python3 ../helper_scripts/parse_multiple_chains.py --input_path=$folder_with_pdbs --output_path=$path_for_parsed_chains
 
-python ../helper_scripts/assign_fixed_chains.py --input_path=$path_for_parsed_chains --output_path=$path_for_assigned_chains --chain_list "$chains_to_design"
+python3 ../helper_scripts/assign_fixed_chains.py --input_path=$path_for_parsed_chains --output_path=$path_for_assigned_chains --chain_list "$chains_to_design"
 
-python ../protein_mpnn_run.py \
+python3 ../protein_mpnn_run.py \
         --jsonl_path $path_for_parsed_chains \
         --chain_id_jsonl $path_for_assigned_chains \
         --out_folder $output_dir \

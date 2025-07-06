@@ -5,8 +5,9 @@
 #SBATCH -c 2
 #SBATCH --output=example_2.out
 
-source activate mlfold
-
+#source activate mlfold
+source ~/.bash_profile
+echo $SHELL
 
 #new_probabilities_using_PSSM = (1-pssm_multi*pssm_coef_gathered[:,None])*probs + pssm_multi*pssm_coef_gathered[:,None]*pssm_bias_gathered 
 #probs - predictions from MPNN
@@ -30,13 +31,13 @@ path_for_assigned_chains=$output_dir"/assigned_pdbs.jsonl"
 pssm=$output_dir"/pssm.jsonl"
 chains_to_design="A B"
 
-python ../helper_scripts/parse_multiple_chains.py --input_path=$folder_with_pdbs --output_path=$path_for_parsed_chains
+python3 ../helper_scripts/parse_multiple_chains.py --input_path=$folder_with_pdbs --output_path=$path_for_parsed_chains
 
-python ../helper_scripts/assign_fixed_chains.py --input_path=$path_for_parsed_chains --output_path=$path_for_assigned_chains --chain_list "$chains_to_design"
+python3 ../helper_scripts/assign_fixed_chains.py --input_path=$path_for_parsed_chains --output_path=$path_for_assigned_chains --chain_list "$chains_to_design"
 
-python ../helper_scripts/make_pssm_input_dict.py --jsonl_input_path=$path_for_parsed_chains --PSSM_input_path=$pssm_input_path --output_path=$pssm
+python3 ../helper_scripts/make_pssm_input_dict.py --jsonl_input_path=$path_for_parsed_chains --PSSM_input_path=$pssm_input_path --output_path=$pssm
 
-python ../protein_mpnn_run.py \
+python3 ../protein_mpnn_run.py \
         --jsonl_path $path_for_parsed_chains \
         --chain_id_jsonl $path_for_assigned_chains \
         --out_folder $output_dir \

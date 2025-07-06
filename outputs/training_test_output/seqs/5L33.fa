@@ -1,4 +1,4 @@
->5L33, score=1.9496, global_score=1.9496, fixed_chains=[], designed_chains=['A'], model_name=epoch_last, git_hash=78fdc70e6da22ba7a535f8913f62310b738f0b33, seed=37
+>5L33, score=1.9496, global_score=1.9496, fixed_chains=[], designed_chains=['A'], model_name=epoch_last, git_hash=8907e6671bfbfc92303b5f79c4b5e6ce47cdef57, seed=37
 HMPEEEKAARLFIEALEKGDPELMRKVISPDTRMEDNGREFTGDEVVEYVKEIQKRGEQWHLRRYTKEGNSWRFEVQVDNNGQTEQWEVQIEVRNGRIKRVTITHV
 >T=0.1, sample=1, score=1.3913, global_score=1.3913, seq_recovery=0.3396
 ALPAAEKVALALLDALATGDPELLKAVLTADSKFTDNGKEFKGEDLVDFVEKLKKEGKKFKPTSGSVTGDSFTLTLTVSSNGKTETATLTVKVENGKLSSLTITKN

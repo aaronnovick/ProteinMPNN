@@ -5,7 +5,9 @@
 #SBATCH -c 2
 #SBATCH --output=example_8.out
 
-source activate mlfold
+#source activate mlfold
+source ~/.bash_profile
+echo $SHELL
 
 folder_with_pdbs="../inputs/PDB_monomers/pdbs/"
 
@@ -19,12 +21,12 @@ path_for_bias=$output_dir"/bias_pdbs.jsonl"
 #Adding global polar amino acid bias (Doug Tischer)
 AA_list="D E H K N Q R S T W Y"
 bias_list="1.39 1.39 1.39 1.39 1.39 1.39 1.39 1.39 1.39 1.39 1.39"
-python ../helper_scripts/make_bias_AA.py --output_path=$path_for_bias --AA_list="$AA_list" --bias_list="$bias_list"
+python3 ../helper_scripts/make_bias_AA.py --output_path=$path_for_bias --AA_list="$AA_list" --bias_list="$bias_list"
 
 path_for_parsed_chains=$output_dir"/parsed_pdbs.jsonl"
-python ../helper_scripts/parse_multiple_chains.py --input_path=$folder_with_pdbs --output_path=$path_for_parsed_chains
+python3 ../helper_scripts/parse_multiple_chains.py --input_path=$folder_with_pdbs --output_path=$path_for_parsed_chains
 
-python ../protein_mpnn_run.py \
+python3 ../protein_mpnn_run.py \
         --jsonl_path $path_for_parsed_chains \
         --out_folder $output_dir \
         --bias_AA_jsonl $path_for_bias \
