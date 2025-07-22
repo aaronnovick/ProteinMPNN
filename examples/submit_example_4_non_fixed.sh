@@ -7,6 +7,7 @@
 
 #source activate mlfold
 source ~/.bash_profile
+conda activate mlfold
 echo $SHELL
 
 folder_with_pdbs="../inputs/PDB_complexes/pdbs/"

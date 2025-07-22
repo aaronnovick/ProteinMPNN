@@ -1,4 +1,4 @@
->5UOI, score=1.5195, global_score=1.5195, fixed_chains=[], designed_chains=['A'], model_name=v_48_020, git_hash=50ebcc724b0ab6cf5737f9f994c2727c2d845938, seed=42
+>5UOI, score=1.5195, global_score=1.5195, fixed_chains=[], designed_chains=['A'], model_name=v_48_020, git_hash=ca93856bcab99d9aeb4d68eff17d19b218b51f42, seed=42
 RKWEEIAERLREEFNINPEEAREAVEKAGGNEEEARRIVKKRL
 >T=0.1, sample=1, score=1.0240, global_score=1.0240, seq_recovery=0.3571
 KSYEPIAEELLERYDVPREVALRAVKESGGDLEKALKLVRVPL

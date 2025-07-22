@@ -1,0 +1,119 @@
+LLM Coding Rules & Guidelines
+This document provides instructions for language models assisting with code generation in this repository. All code must adhere to these standards to ensure production-level quality.
+
+✅ GENERAL PRINCIPLES
+Correctness First: Generated code must run and pass all existing and newly generated tests.
+
+Clarity over Cleverness: Prefer clear, simple, and maintainable solutions over overly abstract or "clever" ones.
+
+DRY: Avoid repetition. Reuse functions and abstractions where appropriate.
+
+KISS: Keep It Simple and Straightforward. No unnecessary layers or complexity.
+
+📦 STRUCTURE & ORGANIZATION
+Follow the existing project architecture and naming conventions.
+
+Match the existing folder structure (e.g., services/, utils/, components/, etc.).
+
+For new files or modules, propose appropriate placement within the structure.
+
+🧑‍💻 CODE STYLE
+Match the language-specific formatting:
+
+Use project-specific .editorconfig, .prettierrc, or .eslintrc where available.
+
+Follow the established language idioms:
+
+Python: PEP8
+
+JavaScript/TypeScript: Airbnb Style Guide
+
+Java: Google Java Style Guide
+
+Do not mix tabs and spaces.
+
+Keep line lengths under 100 characters unless readability benefits from an exception.
+
+📋 DOCUMENTATION & COMMENTS
+All public functions, classes, and modules must include docstrings or comments describing their purpose, parameters, and return types.
+
+Inline comments should explain non-obvious logic or rationale, not repeat what the code says.
+
+Use consistent style for docstrings (e.g., Google, NumPy, or JSDoc style, depending on language).
+
+✅ TESTING
+All new functionality must be covered with unit tests.
+
+If applicable, write integration or E2E tests.
+
+Use existing test frameworks already in the project (e.g., pytest, jest, unittest, etc.).
+
+Tests should cover:
+
+Normal cases
+
+Edge cases
+
+Error handling
+
+🛡️ ERROR HANDLING & LOGGING
+Gracefully handle expected errors (e.g., input validation, API failures).
+
+Use structured logging where possible (e.g., logger.info() not print()).
+
+Avoid exposing sensitive information in logs.
+
+♻️ REFACTORING & REUSE
+If adding similar functionality to existing code, prefer extending or reusing what’s there.
+
+Flag any redundant, deprecated, or unmaintained code encountered.
+
+📦 DEPENDENCIES
+Do not introduce new external libraries unless:
+
+They are necessary.
+
+Lightweight.
+
+Already widely adopted and compatible with the project’s tech stack.
+
+Flag heavy or risky dependencies for human review.
+
+🔐 SECURITY
+Avoid use of eval, insecure random generators, hard-coded secrets, or unsafe deserialization.
+
+Sanitize all inputs and outputs where applicable (especially for web or shell interfaces).
+
+📈 PERFORMANCE
+Avoid premature optimization.
+
+Highlight any areas that could be a bottleneck.
+
+Minimize unnecessary loops, memory usage, and network calls.
+
+📘 COMMUNICATION
+When uncertain, prefer asking clarifying questions over making assumptions.
+
+For complex changes:
+
+Summarize what was done.
+
+Note any tradeoffs.
+
+Suggest improvements for human consideration.
+
+✅ DONE WHEN…
+All of the following criteria are met:
+
+ Code compiles and runs without errors.
+
+ All tests pass.
+
+ Code is linted and follows style guidelines.
+
+ Code is documented and well-structured.
+
+ Code fits logically into the project.
+
+ The solution is maintainable by humans.
+
