@@ -10,10 +10,10 @@ source ~/.bash_profile
 echo $SHELL
 conda activate mlfold
 
-path_to_PDB="../inputs/my_structures/5UOI.pdb"
-path_to_fasta="../outputs/my_variants/seqs/fold_5uoi_sample_3_model_0.fa"
+path_to_PDB="../inputs/my_structures/5UOI/5UOI.pdb"
+path_to_fasta="../outputs/my_variants/5UOI/sample_random_variants/1/random_designs.fa"
 
-output_dir="../outputs/my_variants/5UOI_sample_3_score_only_from_fasta"
+output_dir="../outputs/my_variants/5UOI/sample_variant_scores/1"
 if [ ! -d $output_dir ]
 then
     mkdir -p $output_dir

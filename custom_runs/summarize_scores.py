@@ -3,7 +3,7 @@
 import pandas as pd
 import re
 
-score_file = "outputs/my_variants/5UOI_sample_3_score_only_from_fasta/score_only/5UOI_fasta_all.txt"
+score_file = "../outputs/my_variants/5UOI_sample_5_score_only_from_fasta/score_only/5UOI_fasta_all.txt"
 data = []
 with open(score_file, "r") as f:
     for line in f:
@@ -31,4 +31,4 @@ with open(score_file, "r") as f:
 df = pd.DataFrame(data)
 df = df.sort_values("Mean Score")
 print(df.to_string(index=False))
-df.to_csv("outputs/my_variants/5UOI_sample_3_score_only_from_fasta/score_only/score_summary.csv", index=False)
+df.to_csv("../outputs/my_variants/5UOI_sample_5_score_only_from_fasta/score_only/score_summary.csv", index=False)
