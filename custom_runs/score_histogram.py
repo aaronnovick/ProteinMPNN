@@ -27,25 +27,29 @@ def load_scores_from_csv(csv_path):
     df = pd.read_csv(csv_path)
     return df['Mean Score'].tolist()
 
-def load_scores_from_npz_files(npz_dir):
+def load_mean_scores_from_npz_files(npz_dir):
     """
-    Load all scores from NPZ files in a directory.
+    Load mean scores from NPZ files in a directory.
+    Each NPZ file contains multiple scores for the same sequence variant.
+    This function calculates the mean score for each variant.
     
     Args:
         npz_dir (str): Directory containing NPZ files
         
     Returns:
-        list: List of all scores from all NPZ files
+        list: List of mean scores, one per NPZ file
     """
-    all_scores = []
+    mean_scores = []
     npz_files = glob.glob(os.path.join(npz_dir, "*.npz"))
     
     for npz_file in npz_files:
         data = np.load(npz_file)
         scores = data['score']
-        all_scores.extend(scores)
+        # Calculate mean score for this variant
+        mean_score = np.mean(scores)
+        mean_scores.append(mean_score)
     
-    return all_scores
+    return mean_scores
 
 def create_histogram(scores, output_path, title="Score Distribution", 
                     xlabel="Score", ylabel="Frequency", bins=30, 
@@ -129,8 +133,8 @@ def main():
         scores = load_scores_from_csv(args.input)
         print(f"Loaded {len(scores)} mean scores from CSV file")
     elif args.data_type == 'npz':
-        scores = load_scores_from_npz_files(args.input)
-        print(f"Loaded {len(scores)} individual scores from NPZ files")
+        scores = load_mean_scores_from_npz_files(args.input)
+        print(f"Loaded {len(scores)} mean scores from NPZ files")
     
     # Create histogram
     create_histogram(scores, args.output, title=args.title, bins=args.bins)
@@ -139,14 +143,14 @@ if __name__ == "__main__":
     # Example usage without command line arguments
     if len(os.sys.argv) == 1:
         # Default example: plot scores from NPZ files in sample 1
-        npz_dir = "../outputs/my_variants/5UOI/sample_variant_scores/1/score_only"
-        output_path = "../outputs/my_variants/5UOI/sample_variant_scores/1/score_only/score_histogram.png"
+        npz_dir = "../outputs/my_variants/5UOI/sample_variant_scores/5/score_only"
+        output_path = "../outputs/my_variants/5UOI/sample_variant_scores/5/score_only/score_histogram.png"
         
         if os.path.exists(npz_dir):
             print("Creating histogram from NPZ files...")
-            scores = load_scores_from_npz_files(npz_dir)
+            scores = load_mean_scores_from_npz_files(npz_dir)
             create_histogram(scores, output_path, 
-                           title="5UOI Sample 1 Variants - Score Distribution",
+                           title="5UOI Sample 5 Variants - Score Distribution",
                            xlabel="Score", ylabel="Frequency")
         else:
             print(f"NPZ directory not found: {npz_dir}")
