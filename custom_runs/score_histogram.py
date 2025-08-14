@@ -14,40 +14,42 @@ import glob
 from pathlib import Path
 import argparse
 
-def load_scores_from_csv(csv_path):
-    """
-    Load scores from CSV summary file.
-    
-    Args:
-        csv_path (str): Path to CSV file containing score summaries
-        
-    Returns:
-        list: List of mean scores for each variant
-    """
-    df = pd.read_csv(csv_path)
-    return df['Mean Score'].tolist()
-
-def load_mean_scores_from_npz_files(npz_dir):
+def load_mean_scores_from_npz_files(npz_dir, exclude_files=None):
     """
     Load mean scores from NPZ files in a directory.
     Each NPZ file contains multiple scores for the same sequence variant.
     This function calculates the mean score for each variant.
+    Excludes specified files (default: 5UOI_pdb.npz).
     
     Args:
         npz_dir (str): Directory containing NPZ files
+        exclude_files (list): List of filenames to exclude (default: ['5UOI_pdb.npz'])
         
     Returns:
         list: List of mean scores, one per NPZ file
     """
+    if exclude_files is None:
+        exclude_files = ['5UOI_pdb.npz']
+        
     mean_scores = []
     npz_files = glob.glob(os.path.join(npz_dir, "*.npz"))
     
-    for npz_file in npz_files:
-        data = np.load(npz_file)
-        scores = data['score']
-        # Calculate mean score for this variant
-        mean_score = np.mean(scores)
-        mean_scores.append(mean_score)
+    for npz_file in sorted(npz_files):
+        # Skip excluded files
+        if os.path.basename(npz_file) in exclude_files:
+            print(f"Skipping excluded file: {npz_file}")
+            continue
+            
+        try:
+            data = np.load(npz_file)
+            if 'score' in data:
+                scores = data['score']
+                # Calculate mean score for this variant
+                mean_score = np.mean(scores)
+                mean_scores.append(mean_score)
+            data.close()
+        except Exception as e:
+            print(f"Warning: Could not load {npz_file}: {e}")
     
     return mean_scores
 

@@ -3,7 +3,9 @@
 Column Histogram Analysis for ProteinMPNN Variants
 
 This script generates histograms in a column layout with shared bins
-for better comparison across multiple samples.
+for better comparison across multiple samples. It uses mean scores from NPZ files,
+where each NPZ file contains multiple scores for a single variant, and the script
+calculates the mean score for each variant.
 """
 
 import numpy as np
@@ -14,41 +16,44 @@ import glob
 from pathlib import Path
 import argparse
 
-def load_sample_data(sample_dir):
+def load_mean_scores_from_npz_files(npz_dir, exclude_files=None):
     """
-    Load all score data from a sample directory.
+    Load mean scores from NPZ files in a directory.
+    Each NPZ file contains multiple scores for the same sequence variant.
+    This function calculates the mean score for each variant.
+    Excludes specified files (default: 5UOI_pdb.npz).
     
     Args:
-        sample_dir (str): Path to sample directory
+        npz_dir (str): Directory containing NPZ files
+        exclude_files (list): List of filenames to exclude (default: ['5UOI_pdb.npz'])
         
     Returns:
-        dict: Dictionary containing scores and metadata
+        list: List of mean scores, one per NPZ file
     """
-    csv_path = os.path.join(sample_dir, "score_only", "score_summary.csv")
-    npz_dir = os.path.join(sample_dir, "score_only")
-    
-    data = {}
-    
-    # Load CSV summary
-    if os.path.exists(csv_path):
-        df = pd.read_csv(csv_path)
-        data['mean_scores'] = df['Mean Score'].tolist()
-        data['std_scores'] = df['Std Dev'].tolist()
-        data['sequences'] = df['Sequence'].tolist()
-    
-    # Load individual NPZ scores
-    if os.path.exists(npz_dir):
-        all_scores = []
-        npz_files = glob.glob(os.path.join(npz_dir, "*.npz"))
+    if exclude_files is None:
+        exclude_files = ['5UOI_pdb.npz']
         
-        for npz_file in npz_files:
-            file_data = np.load(npz_file)
-            scores = file_data['score']
-            all_scores.extend(scores)
-        
-        data['individual_scores'] = all_scores
+    mean_scores = []
+    npz_files = glob.glob(os.path.join(npz_dir, "*.npz"))
     
-    return data
+    for npz_file in sorted(npz_files):
+        # Skip excluded files
+        if os.path.basename(npz_file) in exclude_files:
+            print(f"Skipping excluded file: {npz_file}")
+            continue
+            
+        try:
+            data = np.load(npz_file)
+            if 'score' in data:
+                scores = data['score']
+                # Calculate mean score for this variant
+                mean_score = np.mean(scores)
+                mean_scores.append(mean_score)
+            data.close()
+        except Exception as e:
+            print(f"Warning: Could not load {npz_file}: {e}")
+    
+    return mean_scores
 
 def create_column_histograms(sample_data_dict, output_path, bins=30, 
                            figsize=(10, 12), use_individual_scores=True):
@@ -123,13 +128,9 @@ def create_column_histograms(sample_data_dict, output_path, bins=30,
                     facecolor='white', alpha=0.8), fontsize=10)
         
         # Customize subplot
-        axes[i].set_ylabel('Density', fontsize=10)
+        axes[i].set_ylabel('Frequency', fontsize=10)
         axes[i].legend(fontsize=8)
         axes[i].grid(True, alpha=0.3)
-        
-        # Only show legend for the first subplot to avoid clutter
-        if i > 0:
-            axes[i].legend().remove()
     
     # Set common x-axis label
     axes[-1].set_xlabel('Score', fontsize=12)
@@ -236,7 +237,7 @@ def create_shared_bin_histograms(sample_data_dict, output_path, bins=30,
     
     # Set common labels
     fig.text(0.5, 0.02, 'Score', ha='center', fontsize=12)
-    fig.text(0.02, 0.5, 'Density', va='center', rotation='vertical', fontsize=12)
+    fig.text(0.02, 0.5, 'Frequency', va='center', rotation='vertical', fontsize=12)
     
     # Add overall title
     fig.suptitle('Score Distribution Comparison (Grid Layout)', fontsize=14, fontweight='bold')
@@ -288,8 +289,8 @@ def main():
                        help='Output directory for plots')
     parser.add_argument('--bins', type=int, default=30,
                        help='Number of histogram bins (default: 30)')
-    parser.add_argument('--use_mean_scores', action='store_true',
-                       help='Use mean scores instead of individual scores')
+    parser.add_argument('--use_mean_scores', action='store_true', default=True,
+                       help='Use mean scores instead of individual scores (default: True)')
     parser.add_argument('--layout', choices=['column', 'grid', 'both'], default='both',
                        help='Layout type for histograms')
     
@@ -302,7 +303,9 @@ def main():
     sample_data = {}
     for sample_dir in args.sample_dirs:
         sample_name = os.path.basename(sample_dir)
-        sample_data[sample_name] = load_sample_data(sample_dir)
+        mean_scores = load_mean_scores_from_npz_files(sample_dir)
+        sample_data[sample_name] = {'mean_scores': mean_scores}
+        print(f"Loaded {len(mean_scores)} mean scores from {sample_name}")
     
     use_individual = not args.use_mean_scores
     
@@ -331,14 +334,14 @@ if __name__ == "__main__":
     if len(os.sys.argv) == 1:
         # Default example: analyze all 5UOI samples
         sample_dirs = [
-            "outputs/my_variants/5UOI/sample_scores/5UOI_sample_1_score_only_from_fasta",
-            "outputs/my_variants/5UOI/sample_scores/5UOI_sample_2_score_only_from_fasta",
-            "outputs/my_variants/5UOI/sample_scores/5UOI_sample_3_score_only_from_fasta",
-            "outputs/my_variants/5UOI/sample_scores/5UOI_sample_4_score_only_from_fasta",
-            "outputs/my_variants/5UOI/sample_scores/5UOI_sample_5_score_only_from_fasta"
+            "../outputs/my_variants/5UOI/sample_variant_scores/1/score_only",
+            "../outputs/my_variants/5UOI/sample_variant_scores/2/score_only",
+            "../outputs/my_variants/5UOI/sample_variant_scores/3/score_only",
+            "../outputs/my_variants/5UOI/sample_variant_scores/4/score_only",
+            "../outputs/my_variants/5UOI/sample_variant_scores/5/score_only"
         ]
         
-        output_dir = "outputs/my_variants/5UOI/column_histogram_analysis"
+        output_dir = "../outputs/my_variants/5UOI/column_histogram_analysis"
         
         # Check which sample directories exist
         existing_dirs = [d for d in sample_dirs if os.path.exists(d)]
@@ -349,22 +352,24 @@ if __name__ == "__main__":
             # Load data
             sample_data = {}
             for sample_dir in existing_dirs:
-                sample_name = os.path.basename(sample_dir)
-                sample_data[sample_name] = load_sample_data(sample_dir)
+                sample_name = f"Sample_{os.path.basename(os.path.dirname(sample_dir))}"
+                mean_scores = load_mean_scores_from_npz_files(sample_dir)
+                sample_data[sample_name] = {'mean_scores': mean_scores}
+                print(f"Loaded {len(mean_scores)} mean scores from {sample_name}")
             
             # Create output directory
             os.makedirs(output_dir, exist_ok=True)
             
             # Generate column histograms
             output_path = os.path.join(output_dir, "column_histograms.png")
-            create_column_histograms(sample_data, output_path)
+            create_column_histograms(sample_data, output_path, use_individual_scores=False)
             
             # Generate grid histograms
             output_path = os.path.join(output_dir, "grid_histograms.png")
-            create_shared_bin_histograms(sample_data, output_path)
+            create_shared_bin_histograms(sample_data, output_path, use_individual_scores=False)
             
             # Print statistics
-            stats_summary = statistical_analysis(sample_data)
+            stats_summary = statistical_analysis(sample_data, use_individual_scores=False)
             print("\nStatistical Summary:")
             print("=" * 50)
             for sample_name, stats in stats_summary.items():

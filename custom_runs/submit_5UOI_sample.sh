@@ -39,6 +39,6 @@ python3 ../protein_mpnn_run.py \
         --fixed_positions_jsonl $path_for_fixed_positions \
         --out_folder $output_dir \
         --num_seq_per_target 100 \
-        --sampling_temp "0.5" \
+        --sampling_temp "0.1" \
         --seed 42 \
         --batch_size 1

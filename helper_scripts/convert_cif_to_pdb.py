@@ -2,7 +2,7 @@ from Bio.PDB import MMCIFParser, PDBIO
 import os
 
 input_dir = "../inputs/my_structures/5UOI/my_cifs"
-output_dir = "../inputs/my_structures/5UOI/my_samples"
+output_dir = "../inputs/my_structures/5UOI/my_pdbs"
 
 parser = MMCIFParser(QUIET=True)
 io = PDBIO()

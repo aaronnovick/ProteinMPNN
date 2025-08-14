@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Set paths (adjust as needed)
-input_pdb_dir="../inputs/my_structures"
+# NOTE: parser expects a DIRECTORY containing one or more .pdb files
+input_pdb_dir="../inputs/my_structures/5UOI/"
 output_dir="../outputs/my_designs"
 parsed_jsonl="$output_dir/parsed_pdbs.jsonl"
 seq_output_dir="$output_dir/sequences"
@@ -19,7 +20,7 @@ python3 ../helper_scripts/parse_multiple_chains.py \
 python3 ../protein_mpnn_run.py \
     --jsonl_path="$parsed_jsonl" \
     --out_folder="$seq_output_dir" \
-    --num_seq_per_target 5 \
+    --num_seq_per_target 50 \
     --sampling_temp "0.1" \
     --seed 42 \
     --batch_size 1
