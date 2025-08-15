@@ -214,7 +214,7 @@ Examples:
     
     parser.add_argument(
         '--title',
-        default='CV vs. Number of Scores Analysis',
+        default='Coefficient of Variation vs. Number of Scores',
         help='Title for the plot'
     )
     
