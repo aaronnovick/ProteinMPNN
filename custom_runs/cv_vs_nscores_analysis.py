@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import os
 import glob
 import argparse
+import re
 
 def load_variant_cv_data(npz_dir, exclude_files=None):
     """
@@ -56,7 +57,7 @@ def load_variant_cv_data(npz_dir, exclude_files=None):
     
     return variant_data
 
-def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="CV vs. Number of Scores"):
+def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient of Variation vs. Number of Scores"):
     """
     Create a plot showing coefficient of variation vs. number of scores for all samples.
     This addresses the assignment requirement to evaluate CV vs. number of scores
@@ -69,19 +70,28 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="CV vs. Numbe
     """
     plt.figure(figsize=(16, 12))
     
-    # Define colors for different score counts
-    score_colors = {3: '#1f77b4', 5: '#ff7f0e', 10: '#2ca02c'}
+    # Dynamically generate colors for different score counts
+    score_counts = set()
+    for sample_name in sample_data_dict.keys():
+        if sample_name.endswith('scores'):
+            score_count = int(sample_name.split('_')[-1].replace('scores', ''))
+            score_counts.add(score_count)
+    
+    score_counts = sorted(score_counts)
+    colors = plt.cm.tab20(np.linspace(0, 1, len(score_counts)))
+    score_colors = {score_counts[i]: colors[i] for i in range(len(score_counts))}
     
     # Group samples by score count for better visualization
-    score_groups = {3: [], 5: [], 10: []}
+    score_groups = {score_count: [] for score_count in score_counts}
     for sample_name, variant_data in sample_data_dict.items():
         if not variant_data:
             continue
         
         # Extract score count from sample name (e.g., "Sample_1_3scores" -> 3)
-        score_count = int(sample_name.split('_')[-1].replace('scores', ''))
-        if score_count in score_groups:
-            score_groups[score_count].append((sample_name, variant_data))
+        if sample_name.endswith('scores'):
+            score_count = int(sample_name.split('_')[-1].replace('scores', ''))
+            if score_count in score_groups:
+                score_groups[score_count].append((sample_name, variant_data))
     
     # Create scatter plot for each score count
     for score_count, samples in score_groups.items():
@@ -115,7 +125,7 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="CV vs. Numbe
                     label=f'{score_count} scores trend')
     
     # Add vertical lines for the different score counts to highlight them
-    for score_count in [3, 5, 10]:
+    for score_count in score_counts:
         plt.axvline(x=score_count, color='gray', linestyle=':', alpha=0.5, linewidth=1)
         plt.text(score_count, plt.ylim()[1] * 0.95, f'{score_count} scores', 
                 rotation=90, verticalalignment='top', horizontalalignment='right',
@@ -128,7 +138,7 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="CV vs. Numbe
     # Create custom legend
     from matplotlib.patches import Patch
     legend_elements = [Patch(facecolor=score_colors[score_count], alpha=0.7, 
-                           label=f'{score_count} scores') for score_count in [3, 5, 10]]
+                           label=f'{score_count} scores') for score_count in score_counts]
     plt.legend(handles=legend_elements, loc='upper right', fontsize=12)
     
     plt.grid(True, alpha=0.3)
@@ -258,11 +268,11 @@ Examples:
         sample_data = {}
         
         if os.path.exists(base_dir):
-            # Look for score directories (3score, 5score, 10score)
+            # Look for any score directories (e.g., 3score, 5score, 10score, 15score, etc.)
             score_dirs = []
             for item in sorted(os.listdir(base_dir)):
                 item_path = os.path.join(base_dir, item)
-                if os.path.isdir(item_path) and item.endswith('score'):
+                if os.path.isdir(item_path) and 'score' in item.lower():
                     score_dirs.append(item_path)
                     print(f"Found score directory: {item}")
             
@@ -270,7 +280,17 @@ Examples:
             
             # Process each score directory
             for score_dir in score_dirs:
-                score_count = int(score_dir.split('/')[-1].replace('score', ''))
+                # Extract score count from directory name (more flexible parsing)
+                dir_name = os.path.basename(score_dir)
+                
+                # Try to extract the number before "score"
+                score_match = re.search(r'(\d+)', dir_name)
+                if score_match:
+                    score_count = int(score_match.group(1))
+                else:
+                    print(f"Warning: Could not extract score count from directory name: {dir_name}")
+                    continue
+                
                 print(f"\nProcessing {score_count} scores directory...")
                 
                 # Get all sample subdirectories
