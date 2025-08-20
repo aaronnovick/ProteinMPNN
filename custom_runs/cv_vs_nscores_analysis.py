@@ -59,7 +59,7 @@ def load_variant_cv_data(npz_dir, exclude_files=None):
 
 def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient of Variation vs. Number of Scores"):
     """
-    Create a plot showing coefficient of variation vs. number of scores for all samples.
+    Create a violin plot showing coefficient of variation vs. number of scores for all samples.
     This addresses the assignment requirement to evaluate CV vs. number of scores
     to determine the consistency of each calculation.
     
@@ -70,19 +70,8 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient 
     """
     plt.figure(figsize=(16, 12))
     
-    # Dynamically generate colors for different score counts
-    score_counts = set()
-    for sample_name in sample_data_dict.keys():
-        if sample_name.endswith('scores'):
-            score_count = int(sample_name.split('_')[-1].replace('scores', ''))
-            score_counts.add(score_count)
-    
-    score_counts = sorted(score_counts)
-    colors = plt.cm.tab20(np.linspace(0, 1, len(score_counts)))
-    score_colors = {score_counts[i]: colors[i] for i in range(len(score_counts))}
-    
-    # Group samples by score count for better visualization
-    score_groups = {score_count: [] for score_count in score_counts}
+    # Group data by number of scores for violin plot
+    score_groups = {}
     for sample_name, variant_data in sample_data_dict.items():
         if not variant_data:
             continue
@@ -90,46 +79,44 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient 
         # Extract score count from sample name (e.g., "Sample_1_3scores" -> 3)
         if sample_name.endswith('scores'):
             score_count = int(sample_name.split('_')[-1].replace('scores', ''))
-            if score_count in score_groups:
-                score_groups[score_count].append((sample_name, variant_data))
+            if score_count not in score_groups:
+                score_groups[score_count] = []
+            score_groups[score_count].extend([data[0] for data in variant_data])  # Extract CV values
     
-    # Create scatter plot for each score count
-    for score_count, samples in score_groups.items():
-        if not samples:
-            continue
-            
-        color = score_colors[score_count]
-        alpha = 0.7
-        
-        # Plot all samples for this score count
-        for sample_name, variant_data in samples:
-            # Extract CV data (all should have the same number of scores)
-            cvs = [data[0] for data in variant_data]
-            n_scores = [data[1] for data in variant_data]
-            
-            # Create scatter plot
-            plt.scatter(n_scores, cvs, alpha=alpha, label=f"{score_count} scores", 
-                       color=color, s=40, edgecolors='black', linewidth=0.5)
-        
-        # Add trend line for this score count
-        all_cvs = []
-        all_n_scores = []
-        for sample_name, variant_data in samples:
-            all_cvs.extend([data[0] for data in variant_data])
-            all_n_scores.extend([data[1] for data in variant_data])
-        
-        if len(all_cvs) > 1:
-            z = np.polyfit(all_n_scores, all_cvs, 1)
-            p = np.poly1d(z)
-            plt.plot(all_n_scores, p(all_n_scores), color=color, alpha=0.8, linestyle='--', linewidth=3, 
-                    label=f'{score_count} scores trend')
+    if not score_groups:
+        print("Warning: No valid score groups found for violin plot")
+        return
     
-    # Add vertical lines for the different score counts to highlight them
-    for score_count in score_counts:
-        plt.axvline(x=score_count, color='gray', linestyle=':', alpha=0.5, linewidth=1)
-        plt.text(score_count, plt.ylim()[1] * 0.95, f'{score_count} scores', 
-                rotation=90, verticalalignment='top', horizontalalignment='right',
-                fontsize=10, alpha=0.7)
+    # Prepare data for violin plot
+    score_counts = sorted(score_groups.keys())
+    cv_data = [score_groups[count] for count in score_counts]
+    
+    # Create violin plot
+    violin_parts = plt.violinplot(cv_data, positions=score_counts, showmeans=True, showmedians=True)
+    
+    # Customize violin plot appearance
+    violin_parts['bodies'][0].set_facecolor('lightblue')
+    violin_parts['bodies'][0].set_alpha(0.7)
+    violin_parts['cmeans'].set_color('red')
+    violin_parts['cmeans'].set_linewidth(2)
+    violin_parts['cmedians'].set_color('black')
+    violin_parts['cmedians'].set_linewidth=2
+    
+    # Color each violin differently
+    colors = plt.cm.tab20(np.linspace(0, 1, len(score_counts)))
+    for i, (body, color) in enumerate(zip(violin_parts['bodies'], colors)):
+        body.set_facecolor(color)
+        body.set_alpha(0.7)
+        body.set_edgecolor('black')
+        body.set_linewidth(0.5)
+    
+    # Add trend line connecting the means
+    means = [np.mean(cvs) for cvs in cv_data]
+    plt.plot(score_counts, means, 'r-', linewidth=3, alpha=0.8, label='Mean CV trend', zorder=5)
+    
+    # Add trend line connecting the medians
+    medians = [np.median(cvs) for cvs in cv_data]
+    plt.plot(score_counts, medians, 'k-', linewidth=3, alpha=0.8, label='Median CV trend', zorder=5)
     
     plt.xlabel('Number of Scores per Variant', fontsize=14)
     plt.ylabel('Coefficient of Variation (CV)', fontsize=14)
@@ -137,39 +124,48 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient 
     
     # Create custom legend
     from matplotlib.patches import Patch
-    legend_elements = [Patch(facecolor=score_colors[score_count], alpha=0.7, 
-                           label=f'{score_count} scores') for score_count in score_counts]
+    from matplotlib.lines import Line2D
+    legend_elements = [
+        Patch(facecolor='lightblue', alpha=0.7, label='CV Distribution'),
+        Line2D([0], [0], color='red', linewidth=3, label='Mean CV'),
+        Line2D([0], [0], color='black', linewidth=3, label='Median CV')
+    ]
     plt.legend(handles=legend_elements, loc='upper right', fontsize=12)
     
     plt.grid(True, alpha=0.3)
     
     # Use log scale for better visualization if CV values vary widely
-    if any(cv > 10 for sample_data in sample_data_dict.values() for cv, _ in sample_data):
+    all_cvs = []
+    for cvs in cv_data:
+        all_cvs.extend(cvs)
+    
+    if any(cv > 10 for cv in all_cvs):
         plt.yscale('log')
         plt.ylabel('Coefficient of Variation (CV) - Log Scale', fontsize=14)
     
     # Add some statistical insights
-    all_cvs = []
-    all_n_scores = []
-    for sample_data in sample_data_dict.values():
-        for cv, n_scores in sample_data:
-            all_cvs.append(cv)
-            all_n_scores.append(n_scores)
-    
     # Calculate overall trends
     if len(all_cvs) > 1:
-        # Group by number of scores and calculate mean CV
-        score_cv_means = {}
-        for n_scores in set(all_n_scores):
-            cvs_for_n = [cv for cv, n in zip(all_cvs, all_n_scores) if n == n_scores]
-            if cvs_for_n:
-                score_cv_means[n_scores] = np.mean(cvs_for_n)
+        # Group by number of scores and calculate statistics
+        score_stats = {}
+        for score_count, cvs in zip(score_counts, cv_data):
+            if cvs:
+                score_stats[score_count] = {
+                    'mean': np.mean(cvs),
+                    'median': np.median(cvs),
+                    'std': np.std(cvs),
+                    'count': len(cvs)
+                }
         
         # Add text box with insights
-        insight_text = "Overall Trends:\n"
-        for n_scores in sorted(score_cv_means.keys()):
-            mean_cv = score_cv_means[n_scores]
-            insight_text += f"{n_scores} scores: mean CV = {mean_cv:.4f}\n"
+        insight_text = "Statistical Summary:\n"
+        for score_count in sorted(score_stats.keys()):
+            stats = score_stats[score_count]
+            insight_text += f"{score_count} scores:\n"
+            insight_text += f"  Mean CV: {stats['mean']:.4f}\n"
+            insight_text += f"  Median CV: {stats['median']:.4f}\n"
+            insight_text += f"  Std CV: {stats['std']:.4f}\n"
+            insight_text += f"  N variants: {stats['count']}\n\n"
         
         plt.text(0.02, 0.98, insight_text, transform=plt.gca().transAxes, 
                 fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
@@ -180,7 +176,7 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient 
     # Save plot
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"CV vs. Number of Scores plot saved to: {output_path}")
+    print(f"CV vs. Number of Scores violin plot saved to: {output_path}")
 
 def main():
     parser = argparse.ArgumentParser(
