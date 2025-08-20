@@ -10,10 +10,8 @@ calculates the mean score for each variant.
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import os
 import glob
-from pathlib import Path
 import argparse
 
 def load_mean_scores_from_npz_files(npz_dir, exclude_files=None):
@@ -283,10 +281,12 @@ def statistical_analysis(sample_data_dict, use_individual_scores=True):
 
 def main():
     parser = argparse.ArgumentParser(description='Column histogram analysis of sequence variant scores')
-    parser.add_argument('--sample_dirs', nargs='+', required=True,
-                       help='Directories containing sample data')
-    parser.add_argument('--output_dir', required=True,
-                       help='Output directory for plots')
+    parser.add_argument('--sample_dirs', nargs='+', required=False,
+                       help='Directories containing sample data (each should be a sample directory or its score_only subdir)')
+    parser.add_argument('--base_dir', default='../outputs/my_variants/5UOI/sample_variant_scores',
+                       help='Base directory to auto-discover sample score directories (default: ../outputs/my_variants/5UOI/sample_variant_scores)')
+    parser.add_argument('--output_dir', default='../outputs/my_variants/5UOI/column_histogram_analysis',
+                       help='Output directory for plots (default: ../outputs/my_variants/5UOI/column_histogram_analysis)')
     parser.add_argument('--bins', type=int, default=30,
                        help='Number of histogram bins (default: 30)')
     parser.add_argument('--use_mean_scores', action='store_true', default=True,
@@ -299,13 +299,50 @@ def main():
     # Create output directory
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Load data from all samples
+    # Helper to resolve a provided directory to its score_only directory and sample name
+    def resolve_score_only_dir(path):
+        score_only_dir = path
+        if os.path.basename(score_only_dir) != 'score_only':
+            candidate = os.path.join(score_only_dir, 'score_only')
+            if os.path.isdir(candidate):
+                score_only_dir = candidate
+            else:
+                return None, None
+        sample_number = os.path.basename(os.path.dirname(score_only_dir))
+        if not sample_number.isdigit():
+            return None, None
+        sample_name = f"Sample_{sample_number}"
+        return score_only_dir, sample_name
+    
+    # Load data from all samples (either provided or auto-discovered)
     sample_data = {}
-    for sample_dir in args.sample_dirs:
-        sample_name = os.path.basename(sample_dir)
-        mean_scores = load_mean_scores_from_npz_files(sample_dir)
-        sample_data[sample_name] = {'mean_scores': mean_scores}
-        print(f"Loaded {len(mean_scores)} mean scores from {sample_name}")
+    
+    if args.sample_dirs:
+        for input_dir in args.sample_dirs:
+            score_only_dir, sample_name = resolve_score_only_dir(input_dir)
+            if score_only_dir is None or sample_name is None:
+                print(f"Skipping {input_dir}: could not find a valid score_only directory with numeric sample name")
+                continue
+            mean_scores = load_mean_scores_from_npz_files(score_only_dir)
+            sample_data[sample_name] = {'mean_scores': mean_scores}
+            print(f"Loaded {len(mean_scores)} mean scores from {sample_name}")
+    else:
+        base_dir = args.base_dir
+        if os.path.exists(base_dir):
+            for item in sorted(os.listdir(base_dir)):
+                item_path = os.path.join(base_dir, item)
+                score_only_path = os.path.join(item_path, 'score_only')
+                if os.path.isdir(item_path) and os.path.isdir(score_only_path) and item.isdigit():
+                    mean_scores = load_mean_scores_from_npz_files(score_only_path)
+                    sample_name = f"Sample_{item}"
+                    sample_data[sample_name] = {'mean_scores': mean_scores}
+                    print(f"Found sample directory: {item}; loaded {len(mean_scores)} mean scores")
+        else:
+            print(f"Warning: Base directory {base_dir} does not exist")
+    
+    # Ensure consistent ordering by sample number
+    if sample_data:
+        sample_data = {k: sample_data[k] for k in sorted(sample_data.keys(), key=lambda x: int(x.split('_')[1]))}
     
     use_individual = not args.use_mean_scores
     
@@ -330,53 +367,4 @@ def main():
             print(f"  {stat_name}: {value:.4f}")
 
 if __name__ == "__main__":
-    # Example usage without command line arguments
-    if len(os.sys.argv) == 1:
-        # Default example: analyze all 5UOI samples
-        sample_dirs = [
-            "../outputs/my_variants/5UOI/sample_variant_scores/1/score_only",
-            "../outputs/my_variants/5UOI/sample_variant_scores/2/score_only",
-            "../outputs/my_variants/5UOI/sample_variant_scores/3/score_only",
-            "../outputs/my_variants/5UOI/sample_variant_scores/4/score_only",
-            "../outputs/my_variants/5UOI/sample_variant_scores/5/score_only"
-        ]
-        
-        output_dir = "../outputs/my_variants/5UOI/column_histogram_analysis"
-        
-        # Check which sample directories exist
-        existing_dirs = [d for d in sample_dirs if os.path.exists(d)]
-        
-        if existing_dirs:
-            print(f"Analyzing {len(existing_dirs)} sample directories...")
-            
-            # Load data
-            sample_data = {}
-            for sample_dir in existing_dirs:
-                sample_name = f"Sample_{os.path.basename(os.path.dirname(sample_dir))}"
-                mean_scores = load_mean_scores_from_npz_files(sample_dir)
-                sample_data[sample_name] = {'mean_scores': mean_scores}
-                print(f"Loaded {len(mean_scores)} mean scores from {sample_name}")
-            
-            # Create output directory
-            os.makedirs(output_dir, exist_ok=True)
-            
-            # Generate column histograms
-            output_path = os.path.join(output_dir, "column_histograms.png")
-            create_column_histograms(sample_data, output_path, use_individual_scores=False)
-            
-            # Generate grid histograms
-            output_path = os.path.join(output_dir, "grid_histograms.png")
-            create_shared_bin_histograms(sample_data, output_path, use_individual_scores=False)
-            
-            # Print statistics
-            stats_summary = statistical_analysis(sample_data, use_individual_scores=False)
-            print("\nStatistical Summary:")
-            print("=" * 50)
-            for sample_name, stats in stats_summary.items():
-                print(f"\n{sample_name}:")
-                for stat_name, value in stats.items():
-                    print(f"  {stat_name}: {value:.4f}")
-        else:
-            print("No sample directories found. Please run with command line arguments.")
-    else:
-        main() 
+    main()
