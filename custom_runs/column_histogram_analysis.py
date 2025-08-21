@@ -322,8 +322,8 @@ def main():
     parser = argparse.ArgumentParser(description='Column histogram analysis of sequence variant scores')
     parser.add_argument('--sample_dirs', nargs='+', required=False,
                        help='Directories containing sample data (each should be a sample directory or its score_only subdir)')
-    parser.add_argument('--base_dir', default='../outputs/my_variants/5UOI/sample_variant_scores',
-                       help='Base directory to auto-discover sample score directories (default: ../outputs/my_variants/5UOI/sample_variant_scores)')
+    parser.add_argument('--base_dir', default='../outputs/my_variants/5UOI/sample_variant_scores/5score',
+                       help='Base directory to auto-discover sample score directories (default: ../outputs/my_variants/5UOI/sample_variant_scores/5score)')
     parser.add_argument('--output_dir', default='../outputs/my_variants/5UOI/column_histogram_analysis',
                        help='Output directory for plots (default: ../outputs/my_variants/5UOI/column_histogram_analysis)')
     parser.add_argument('--bins', type=int, default=30,

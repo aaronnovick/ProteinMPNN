@@ -8,6 +8,7 @@ of each calculation, as required by the assignment.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patheffects
 import os
 import glob
 import argparse
@@ -91,32 +92,58 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient 
     score_counts = sorted(score_groups.keys())
     cv_data = [score_groups[count] for count in score_counts]
     
+    # Create categorical positions for even spacing
+    positions = list(range(len(score_counts)))
+    
     # Create violin plot
-    violin_parts = plt.violinplot(cv_data, positions=score_counts, showmeans=True, showmedians=True)
+    violin_parts = plt.violinplot(cv_data, positions=positions, showmeans=True, showmedians=True)
     
     # Customize violin plot appearance
     violin_parts['bodies'][0].set_facecolor('lightblue')
     violin_parts['bodies'][0].set_alpha(0.7)
-    violin_parts['cmeans'].set_color('red')
-    violin_parts['cmeans'].set_linewidth(2)
-    violin_parts['cmedians'].set_color('black')
-    violin_parts['cmedians'].set_linewidth=2
     
+    # Make mean and median lines more prominent and ensure they're above data points
+    violin_parts['cmeans'].set_color('white')
+    violin_parts['cmeans'].set_linewidth(2)
+    violin_parts['cmeans'].set_zorder(20)
+    violin_parts['cmeans'].set_path_effects([plt.matplotlib.patheffects.withStroke(linewidth=2, foreground='white')])
+    
+    violin_parts['cmedians'].set_color('black')
+    violin_parts['cmedians'].set_linewidth(2)
+    violin_parts['cmedians'].set_zorder(20)
+    violin_parts['cmedians'].set_path_effects([plt.matplotlib.patheffects.withStroke(linewidth=2, foreground='white')])
     # Color each violin differently
-    colors = plt.cm.tab20(np.linspace(0, 1, len(score_counts)))
-    for i, (body, color) in enumerate(zip(violin_parts['bodies'], colors)):
+    # Custom darker color palette (works well with white mean line)
+    custom_colors = [
+        "blue",  # blue
+        "darkred",  # dark red
+        "darkgreen",  # dark green
+        "darkviolet",  # dark violet
+    ]
+
+    for i, (body, color) in enumerate(zip(violin_parts['bodies'], custom_colors)):
         body.set_facecolor(color)
         body.set_alpha(0.7)
-        body.set_edgecolor('black')
+        body.set_edgecolor("black")
         body.set_linewidth(0.5)
+
     
-    # Add trend line connecting the means
-    means = [np.mean(cvs) for cvs in cv_data]
-    plt.plot(score_counts, means, 'r-', linewidth=3, alpha=0.8, label='Mean CV trend', zorder=5)
+
+    # Add 10% of data points (chosen randomly) to each violin
+    np.random.seed(42)  # For reproducible random selection
+    for i, (score_count, cvs) in enumerate(zip(score_counts, cv_data)):
+        # Randomly select 10% of the data points
+        n_points = len(cvs)
+        n_selected = max(1, n_points // 10)  # At least 1 point, 10% of total
+        selected_indices = np.random.choice(n_points, size=n_selected, replace=False)
+        selected_cvs = [cvs[j] for j in selected_indices]
+        
+        # Add jitter to x-position to avoid overlap
+        jitter = np.random.normal(0, 0.1, len(selected_cvs))
+        plt.scatter(positions[i] + jitter, selected_cvs, alpha=0.2, s=25, color='black', zorder=5, edgecolors='none')
     
-    # Add trend line connecting the medians
-    medians = [np.median(cvs) for cvs in cv_data]
-    plt.plot(score_counts, medians, 'k-', linewidth=3, alpha=0.8, label='Median CV trend', zorder=5)
+    # Set x-axis ticks to show actual score count values
+    plt.xticks(positions, score_counts)
     
     plt.xlabel('Number of Scores per Variant', fontsize=14)
     plt.ylabel('Coefficient of Variation (CV)', fontsize=14)
@@ -125,12 +152,20 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient 
     # Create custom legend
     from matplotlib.patches import Patch
     from matplotlib.lines import Line2D
+    import matplotlib.patheffects as pe
+
     legend_elements = [
-        Patch(facecolor='lightblue', alpha=0.7, label='CV Distribution'),
-        Line2D([0], [0], color='red', linewidth=3, label='Mean CV'),
-        Line2D([0], [0], color='black', linewidth=3, label='Median CV')
-    ]
+        Patch(facecolor='darkgray', alpha=0.7, label='CV Distribution'),
+        Line2D([0], [0], color='white', linewidth=2.5,
+            path_effects=[pe.withStroke(linewidth=3.5, foreground='black')],
+            label='Mean CV'),
+        Line2D([0], [0], color='black', linewidth=2,
+            path_effects=[pe.withStroke(linewidth=3)],
+            label='Median CV')
+]
+
     plt.legend(handles=legend_elements, loc='upper right', fontsize=12)
+
     
     plt.grid(True, alpha=0.3)
     
@@ -167,7 +202,7 @@ def create_cv_vs_nscores_plot(sample_data_dict, output_path, title="Coefficient 
             insight_text += f"  Std CV: {stats['std']:.4f}\n"
             insight_text += f"  N variants: {stats['count']}\n\n"
         
-        plt.text(0.02, 0.98, insight_text, transform=plt.gca().transAxes, 
+        plt.text(1.05, 0.98, insight_text, transform=plt.gca().transAxes, 
                 fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
     
     # Adjust layout
