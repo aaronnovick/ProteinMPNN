@@ -51,7 +51,7 @@ for sample_dir in "$base_variants_dir"/*/; do
                         --pdb_path "$path_to_PDB" \
                         --pdb_path_chains "$chains_to_design" \
                         --out_folder "$output_dir" \
-                        --num_seq_per_target 15 \
+                        --num_seq_per_target 5 \
                         --sampling_temp "0.1" \
                         --score_only 1 \
                         --seed 42 \
