@@ -13,6 +13,14 @@ import os
 import glob
 import argparse
 import re
+import signal
+
+class TimeoutException(Exception):
+    """Raised when np.load takes too long."""
+    pass
+
+def _timeout_handler(signum, frame):
+    raise TimeoutException()
 
 def load_variant_cv_data(npz_dir, exclude_files=None):
     """
@@ -38,23 +46,32 @@ def load_variant_cv_data(npz_dir, exclude_files=None):
             continue
             
         try:
+            # Set a 5-second alarm for file loading
+            signal.signal(signal.SIGALRM, _timeout_handler)
+            signal.alarm(5)
+
             data = np.load(npz_file)
+            signal.alarm(0)  # cancel timer on success
+
             if 'score' in data:
                 scores = data['score']
                 n_scores = len(scores)
-                
-                if n_scores > 1:  # Need at least 2 scores to calculate CV
-                    # Calculate coefficient of variation
+
+                if n_scores > 1:
                     mean_score = np.mean(scores)
                     std_score = np.std(scores)
-                    
-                    if mean_score != 0:  # Avoid division by zero
+
+                    if mean_score != 0:
                         cv = std_score / abs(mean_score)
                         variant_data.append((cv, n_scores))
-                
+
             data.close()
+
+        except TimeoutException:
+            raise RuntimeError(f"Timeout while loading {npz_file}")
         except Exception as e:
-            print(f"Warning: Could not load {npz_file}: {e}")
+            raise RuntimeError(f"Could not load {npz_file}: {e}")
+
     
     return variant_data
 
