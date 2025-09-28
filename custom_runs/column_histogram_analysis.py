@@ -279,6 +279,8 @@ def create_shared_bin_histograms(sample_data_dict, output_path, bins=30,
             
             # Adjust layout
             plt.tight_layout()
+            plt.subplots_adjust(left=0.08)  # increase from default (0.1). Try 0.12–0.15 if still overlapping
+
             
             # Save page to PDF
             pdf.savefig(fig, dpi=300, bbox_inches='tight')
@@ -322,9 +324,9 @@ def main():
     parser = argparse.ArgumentParser(description='Column histogram analysis of sequence variant scores')
     parser.add_argument('--sample_dirs', nargs='+', required=False,
                        help='Directories containing sample data (each should be a sample directory or its score_only subdir)')
-    parser.add_argument('--base_dir', default='../outputs/my_variants/5UOI/sample_variant_scores/5score',
+    parser.add_argument('--base_dir', default='../McConnell_variants/aaa/outputs/variants_scores',
                        help='Base directory to auto-discover sample score directories (default: ../outputs/my_variants/5UOI/sample_variant_scores/5score)')
-    parser.add_argument('--output_dir', default='../outputs/my_variants/5UOI/column_histogram_analysis',
+    parser.add_argument('--output_dir', default='../McConnell_variants/aaa/outputs/column_histogram_analysis',
                        help='Output directory for plots (default: ../outputs/my_variants/5UOI/column_histogram_analysis)')
     parser.add_argument('--bins', type=int, default=30,
                        help='Number of histogram bins (default: 30)')

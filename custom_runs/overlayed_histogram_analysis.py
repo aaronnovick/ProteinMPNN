@@ -207,7 +207,7 @@ Examples:
     
     else:
         # Default: Automatically discover all sample directories in sample_variant_scores
-        base_dir = "../outputs/my_variants/5UOI/sample_variant_scores"
+        base_dir = "../outputs/my_variants/5UOI/sample_variant_scores/5score"
         sample_dirs = []
         
         if os.path.exists(base_dir):

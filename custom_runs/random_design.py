@@ -47,10 +47,21 @@ def extract_sample_number(header: str) -> int | None:
     Returns:
         Sample number if found, else None.
     """
+    # First try to find sample=X pattern (for 5UOI format)
     match = re.search(r'sample=(\d+)', header)
-    return int(match.group(1)) if match else None
+    if match:
+        return int(match.group(1))
+    
+    # If no sample=X pattern, try to extract a number from the header
+    # This handles formats like "HHH_rd4_0169\" by extracting the last number
+    numbers = re.findall(r'\d+', header)
+    if numbers:
+        return int(numbers[-1])  # Use the last number found
+    
+    return None
 
-def random_design(sequence: str, n_designs: int, positions: List[int], header_prefix: str = "") -> str:
+def random_design(sequence: str, n_designs: int, positions: List[int], header_prefix: str = "", 
+                 position_constraints: dict = None) -> str:
     """
     Generate random designs for a sequence.
 
@@ -59,6 +70,8 @@ def random_design(sequence: str, n_designs: int, positions: List[int], header_pr
         n_designs: Number of designs to generate.
         positions: List of positions (0-based) to randomize.
         header_prefix: Prefix to add in FASTA headers.
+        position_constraints: Dict mapping position (0-based) to allowed amino acids.
+                             If None, all positions use all 20 amino acids.
 
     Returns:
         FASTA-formatted string of designs.
@@ -68,11 +81,20 @@ def random_design(sequence: str, n_designs: int, positions: List[int], header_pr
         design = list(sequence)
         for pos in set(positions):  # deduplicate positions
             if 0 <= pos < len(sequence):
-                design[pos] = random.choice(AMINO_ACIDS)
+                # Use position-specific constraints if provided, otherwise use all amino acids
+                if position_constraints and pos in position_constraints:
+                    allowed_aas = position_constraints[pos]
+                    if not allowed_aas:  # Empty list means no constraints (use all)
+                        allowed_aas = AMINO_ACIDS
+                else:
+                    allowed_aas = AMINO_ACIDS
+                
+                design[pos] = random.choice(allowed_aas)
         fasta_str += f">{header_prefix}design{i}\n{''.join(design)}\n"
     return fasta_str
 
-def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: List[int], base_output_dir: str) -> None:
+def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: List[int], base_output_dir: str, 
+                              position_constraints: dict = None) -> None:
     """
     Process multiple sequences and generate random designs.
 
@@ -81,6 +103,7 @@ def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: 
         n_designs: Number of designs per sequence.
         positions: List of positions (0-based) to randomize for all samples.
         base_output_dir: Base directory for output.
+        position_constraints: Dict mapping position (0-based) to allowed amino acids.
     """
     sequences = read_fasta_sequences(fasta_file_path)
     print(f"Found {len(sequences)} sequences in {fasta_file_path}")
@@ -101,7 +124,7 @@ def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: 
             output_path = os.path.join(default_dir, "random_designs.fa")
             header_prefix = "original_"
 
-        designs = random_design(sequence, n_designs, positions, header_prefix)
+        designs = random_design(sequence, n_designs, positions, header_prefix, position_constraints)
 
         with open(output_path, "w") as f:
             f.write(designs)
@@ -113,7 +136,7 @@ if __name__ == "__main__":
     n_designs = 100
 
     # Define PDB positions
-    positions_pdb = [17, 18, 19, 22, 27, 29]
+    positions_pdb = [17, 18, 19, 20, 22, 23, 26, 27]
 
     # Warn if duplicates exist
     if len(positions_pdb) != len(set(positions_pdb)):
@@ -123,6 +146,23 @@ if __name__ == "__main__":
     # Convert to 0-based for Python
     positions = [p - 1 for p in positions_pdb]
 
+    # OPTIONAL: Define position-specific amino acid constraints
+    # Format: {position_0_based: [list_of_allowed_amino_acids]}
+    # Example: Only allow hydrophobic amino acids at certain positions
+    position_constraints = {
+        17: ["A", "C", "D", "G", "N", "S", "T", "Y"],
+        18: ["A", "C", "D", "G", "N", "S", "T", "Y"],
+        20: ["D", "E", "G", "H", "K", "N", "Q", "R", "S"]
+        # Examples below:
+        # 16: ["A", "V", "L", "I", "M", "F", "W", "Y"],  # Position 17 (0-based 16): only hydrophobic
+        # 17: ["K", "R", "H"],  # Position 18 (0-based 17): only basic
+        # 18: ["D", "E"],  # Position 19 (0-based 18): only acidic
+        # Leave other positions unconstrained (will use all 20 amino acids)
+    }
+    
+    # If you want to use constraints, uncomment the lines above and modify as needed
+    # If position_constraints is empty or None, all positions will use all 20 amino acids
+
     base_output_dir = "../outputs/my_variants/5UOI/sample_random_variants"
-    process_multiple_sequences(fasta_file_path, n_designs, positions, base_output_dir)
+    process_multiple_sequences(fasta_file_path, n_designs, positions, base_output_dir, position_constraints)
     print(f"\nCompleted! All random designs saved to {base_output_dir}")
