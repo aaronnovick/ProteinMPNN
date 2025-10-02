@@ -11,8 +11,8 @@ echo $SHELL
 conda activate mlfold
 
 path_to_PDB="../inputs/my_structures/5UOI/5UOI.pdb"
-base_variants_dir="../McConnell_variants/aaa/outputs/variants"
-base_output_dir="../McConnell_variants/aaa/outputs/variants_scores"
+base_variants_dir="../McConnell_variants/aaa/outputs/loop1/variants"
+base_output_dir="../McConnell_variants/aaa/outputs/loop1/scores"
 chains_to_design="A"
 
 # Loop through all sample directories

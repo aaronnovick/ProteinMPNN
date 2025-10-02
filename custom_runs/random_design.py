@@ -94,7 +94,7 @@ def random_design(sequence: str, n_designs: int, positions: List[int], header_pr
     return fasta_str
 
 def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: List[int], base_output_dir: str, 
-                              position_constraints: dict = None) -> None:
+                              position_constraints: dict = None, skip_native: bool = True) -> None:
     """
     Process multiple sequences and generate random designs.
 
@@ -104,9 +104,18 @@ def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: 
         positions: List of positions (0-based) to randomize for all samples.
         base_output_dir: Base directory for output.
         position_constraints: Dict mapping position (0-based) to allowed amino acids.
+        skip_native: If True, skip the first sequence (assumed to be native/wild type).
     """
     sequences = read_fasta_sequences(fasta_file_path)
     print(f"Found {len(sequences)} sequences in {fasta_file_path}")
+    
+    # Skip the first sequence (native/wild type) if requested
+    if skip_native and len(sequences) > 1:
+        sequences = sequences[1:]
+        print(f"Skipping native sequence. Processing {len(sequences)} design sequences.")
+    elif skip_native and len(sequences) == 1:
+        print("Warning: Only one sequence found and skip_native=True. No sequences to process.")
+        return
 
     for i, (header, sequence) in enumerate(sequences):
         print(f"Processing sequence {i+1}/{len(sequences)}: {header[:50]}...")
@@ -132,11 +141,11 @@ def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: 
         print(f"  Saved {n_designs} designs to {output_path}")
 
 if __name__ == "__main__":
-    fasta_file_path = "../outputs/my_designs/sequences/seqs/5UOI.fa"
+    fasta_file_path = "../McConnell_variants/aaa/inputs/parents.fa"
     n_designs = 100
 
     # Define PDB positions
-    positions_pdb = [17, 18, 19, 20, 22, 23, 26, 27]
+    positions_pdb = [18, 19, 22, 26, 33, 36, 37, 40]
 
     # Warn if duplicates exist
     if len(positions_pdb) != len(set(positions_pdb)):
@@ -150,9 +159,6 @@ if __name__ == "__main__":
     # Format: {position_0_based: [list_of_allowed_amino_acids]}
     # Example: Only allow hydrophobic amino acids at certain positions
     position_constraints = {
-        17: ["A", "C", "D", "G", "N", "S", "T", "Y"],
-        18: ["A", "C", "D", "G", "N", "S", "T", "Y"],
-        20: ["D", "E", "G", "H", "K", "N", "Q", "R", "S"]
         # Examples below:
         # 16: ["A", "V", "L", "I", "M", "F", "W", "Y"],  # Position 17 (0-based 16): only hydrophobic
         # 17: ["K", "R", "H"],  # Position 18 (0-based 17): only basic
@@ -163,6 +169,8 @@ if __name__ == "__main__":
     # If you want to use constraints, uncomment the lines above and modify as needed
     # If position_constraints is empty or None, all positions will use all 20 amino acids
 
-    base_output_dir = "../outputs/my_variants/5UOI/sample_random_variants"
-    process_multiple_sequences(fasta_file_path, n_designs, positions, base_output_dir, position_constraints)
+    # Skip native sequence (first sequence) when generating variants
+    # Set skip_native=False if you want to include the native sequence
+    base_output_dir = "../McConnell_variants/aaa/outputs/helix23/variants"
+    process_multiple_sequences(fasta_file_path, n_designs, positions, base_output_dir, position_constraints, skip_native=True)
     print(f"\nCompleted! All random designs saved to {base_output_dir}")
