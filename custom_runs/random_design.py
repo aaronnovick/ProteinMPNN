@@ -141,11 +141,11 @@ def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: 
         print(f"  Saved {n_designs} designs to {output_path}")
 
 if __name__ == "__main__":
-    fasta_file_path = "../McConnell_variants/aaa/inputs/parents.fa"
-    n_designs = 100
+    fasta_file_path = "../outputs/my_designs/sequences/seqs/5UOI.fa"
+    n_designs = 1000
 
     # Define PDB positions
-    positions_pdb = [18, 19, 22, 26, 33, 36, 37, 40]
+    positions_pdb = [17, 18, 19, 20, 22, 23, 26, 27]
 
     # Warn if duplicates exist
     if len(positions_pdb) != len(set(positions_pdb)):
@@ -159,6 +159,9 @@ if __name__ == "__main__":
     # Format: {position_0_based: [list_of_allowed_amino_acids]}
     # Example: Only allow hydrophobic amino acids at certain positions
     position_constraints = {
+        17: ["A", "C", "D", "G", "N", "S", "T", "Y"],
+        18: ["A", "C", "D", "G", "N", "S", "T", "Y"],
+        20: ["D", "E", "G", "H", "K", "N", "Q", "R", "S"]
         # Examples below:
         # 16: ["A", "V", "L", "I", "M", "F", "W", "Y"],  # Position 17 (0-based 16): only hydrophobic
         # 17: ["K", "R", "H"],  # Position 18 (0-based 17): only basic
@@ -171,6 +174,6 @@ if __name__ == "__main__":
 
     # Skip native sequence (first sequence) when generating variants
     # Set skip_native=False if you want to include the native sequence
-    base_output_dir = "../McConnell_variants/aaa/outputs/helix23/variants"
+    base_output_dir = "../outputs/my_variants/5UOI/helix2/variants/"
     process_multiple_sequences(fasta_file_path, n_designs, positions, base_output_dir, position_constraints, skip_native=True)
     print(f"\nCompleted! All random designs saved to {base_output_dir}")
