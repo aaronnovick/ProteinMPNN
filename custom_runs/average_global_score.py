@@ -12,7 +12,7 @@ Usage:
     python3 average_global_score.py <directory_path> [--top-n N]
     
 Examples:
-    python3 average_global_score.py ../McConnell_variants/aaa/outputs/helix2/scores
+    python3 average_global_score.py ../outputs/my_variants/5UOI/helix2/scores/1/score_only
     python3 average_global_score.py ../McConnell_variants/aaa/outputs/helix2/scores --top-n 10
     python3 average_global_score.py ../McConnell_variants/aaa/outputs/helix2/scores --top-n 25
 """
