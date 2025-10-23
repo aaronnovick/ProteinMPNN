@@ -142,7 +142,7 @@ def process_multiple_sequences(fasta_file_path: str, n_designs: int, positions: 
 
 if __name__ == "__main__":
     fasta_file_path = "../outputs/my_designs/sequences/seqs/5UOI.fa"
-    n_designs = 1000
+    n_designs = 100
 
     # Define PDB positions
     positions_pdb = [17, 18, 19, 20, 22, 23, 26, 27]
