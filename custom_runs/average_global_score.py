@@ -159,10 +159,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 average_global_score.py McConnell_variants/aaa/outputs/helix2/scores
-  python3 average_global_score.py /path/to/npz/directory
-  python3 average_global_score.py McConnell_variants/aaa/outputs/helix2/scores --top-n 10
-  python3 average_global_score.py /path/to/npz/directory --top-n 25 --verbose
+  python3 average_global_score.py ../McConnell_variants/aaa/outputs/helix2/scores
+  python3 average_global_score.py ../path/to/npz/directory
+  python3 average_global_score.py ../McConnell_variants/aaa/outputs/helix2/scores --top-n 10
+  python3 average_global_score.py ../path/to/npz/directory --top-n 25 --verbose
         """
     )
     
